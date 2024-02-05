@@ -1,0 +1,16 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "server for led control",
+  "main": "index.js",
+
+  "dependencies": {
+    "express": "^4.18.2",
+    "nodemon": "^3.0.3"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "abdelrahman osama",
+  "license": "ISC"
+}
