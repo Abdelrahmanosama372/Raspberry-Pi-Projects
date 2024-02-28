@@ -1,53 +1,57 @@
-#include <chrono>
-#include <iostream>
-#include <mqtt/async_client.h>
-#include <mqtt/callback.h>
-#include <mqtt/connect_options.h>
-#include <mqtt/exception.h>
-#include <string>
-#include <thread>
+#include "subscriber.hpp"
 
-#define SERVER_ADDRESS "tcp://192.168.1.109:1883"
-#define CLIENT_ID "subscriber"
+void controlLed(const std::string order){
+  std::ofstream fs;
+  fs.open("/sys/class/leds/test/brightness");
+  if(!fs.is_open()){
+    std::cout << "failed to open the file" << std::endl;
+    return;
+  }
+  if(order == "on")
+    fs << 1 << std::endl;
+  else
+    fs << 0 << std::endl;
+  fs.close();
+}
 
-class SubscriberCallBack : public virtual mqtt::callback {
-  public:
-    void connected(const std::string& msg) override {
-      std::cout << "connected to the broker" << std::endl;
-    }
+// SubscriberCallBack class methods definitions
+void SubscriberCallBack::connected(const std::string& msg){
+    std::cout << "connected to the broker" << std::endl;
+}
 
-    void connection_lost(const std::string& ) override {
-      std::cout << "connection lost" << std::endl;
-    }
+void SubscriberCallBack::connection_lost(const std::string& ){
+    std::cout << "connection lost" << std::endl;
+}
 
-   void message_arrived(mqtt::const_message_ptr msg) override {
+void SubscriberCallBack::message_arrived(mqtt::const_message_ptr msg){
     std::cout << "Message Received: ["
               << "Topic: " << msg->get_topic()
               << ", Payload: " << msg->to_string()  << " ]" << std::endl;
-  }
-};
+    if(msg->to_string() == "quit"){
+      // stop spining
+      spining = false;
+      return;
+    }
+    controlLed(msg->to_string());
+}
 
-int main(int argc, const char** argv) {
-
-  mqtt::async_client client(SERVER_ADDRESS,CLIENT_ID);
+// subscriber class methods definitions
+Subscriber::Subscriber(std::string topic):client(SERVER_ADDRESS,CLIENT_ID), 
+  topic(topic), spining(true), subCb(spining){
+  mqtt::connect_options conopt;
+  conopt.set_keep_alive_interval(20);
+  conopt.set_clean_session(true);
   try {
-    SubscriberCallBack  subCb;
-    client.set_callback(subCb);
-
-    mqtt::connect_options conopt;
-    conopt.set_keep_alive_interval(20);
-    conopt.set_clean_session(true);
+    client.set_callback(subCb);      
     client.connect(conopt)->wait();
-
-    std::string topic = "ledState";
-  
     client.subscribe(topic,1)->wait();
-    std::this_thread::sleep_for(std::chrono::seconds(100));
-    client.unsubscribe(topic)->wait();
-    client.disconnect()->wait();
   }catch(mqtt::exception &execep){
     std::cout << "Error is " << execep.what() << std::endl;
   }
-
-    return 0;
 }
+
+Subscriber::~Subscriber(){
+    client.unsubscribe(topic)->wait();
+    client.disconnect()->wait();
+}
+

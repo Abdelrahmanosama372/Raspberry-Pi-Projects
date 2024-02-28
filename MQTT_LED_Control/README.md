@@ -20,22 +20,20 @@ MQTT_LED_Control is a project that allows you to control the state of an LED on 
 
 1. Start the MQTT broker on your Laptop.
 
-2. compile and execute the `publisher.cpp` code on your laptop to publish the state of the LED:
+2. compile and execute the `main.cpp` code on your laptop to publish the state of the LED:
 
     ```bash
     g++ publisher.cpp -lpaho-mqttpp3 -lpaho-mqtt3as -o publisher
     ./publisher
     ```
-3. enter the state on the terminal to be published for example
-    ```bash
-    on
-    ```
+3. enter the led state `on || off` on the terminal to be published and `quit` to close the communication
 
 4. The LED on your Raspberry Pi will switch on or off based on the state published by the publisher code.
 
 ## Configuration
 
-- Modify the MQTT broker address in the `publisher.cpp` code to match your setup.
+- Modify the MQTT broker address in the `raspberryPi_client/subscriber.hpp` code to match your setup.
+- Modify the led brightness file in raspberryPi_client/subscriber.cpp to match your setup.
 
 ## Contributing
 
